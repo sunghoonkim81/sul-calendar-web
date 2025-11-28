@@ -1,81 +1,103 @@
-from flask import Flask, render_template, request, jsonify
-import calendar
+from flask import Flask, request, jsonify, render_template
+from datetime import datetime, timedelta
 import json
 import os
-from datetime import date, datetime, timedelta
 
 app = Flask(__name__)
 
 DATA_FILE = "sul_calendar_data_web.json"
 
-# 전역 데이터 (메모리 + 파일 저장)
-DATA = {"users": {}}
 
-
+# ---------------------------
+# 데이터 파일 로드/저장
+# ---------------------------
 def load_data():
-    global DATA
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
-                DATA = json.load(f)
-                # 안전 장치
-                if "users" not in DATA:
-                    DATA = {"users": {}}
-        except Exception:
-            DATA = {"users": {}}
-    else:
-        DATA = {"users": {}}
+    if not os.path.exists(DATA_FILE):
+        return {"users": {}}
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
-def save_data():
-    try:
-        with open(DATA_FILE, "w", encoding="utf-8") as f:
-            json.dump(DATA, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print("데이터 저장 오류:", e)
+def save_data(data):
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-def get_user_data(username: str):
-    users = DATA.setdefault("users", {})
-    return users.setdefault(username, {})
+# ---------------------------
+# 연속 안 마신 날 계산
+# ---------------------------
+def calc_streak(user_days):
+    today = datetime.now().date()
+    streak_coffee = 0
+    streak_alcohol = 0
 
-
-def calc_streak(username: str, key: str) -> int:
-    """
-    오늘 기준으로 '연속으로 안 마신 일수' 계산.
-    - 그날에 key가 '마셨다' 로 기록되어 있으면 streak 끊김
-    - 기록이 없거나, '마셨다'가 아니면 '안 마신 날'로 간주
-    """
-    user_data = get_user_data(username)
-    today = date.today()
-    d = today
-    count = 0
-
+    cur = today
     while True:
-        ds = d.isoformat()
-        data = user_data.get(ds)
-        if data and data.get(key) == "마셨다":
+        date_str = cur.strftime("%Y-%m-%d")
+        day = user_days.get(date_str, {})
+
+        if day.get("coffee") == "마셨다":
             break
-        count += 1
-        d -= timedelta(days=1)
-        if count > 365:
+        streak_coffee += 1
+        cur -= timedelta(days=1)
+
+    cur = today
+    while True:
+        date_str = cur.strftime("%Y-%m-%d")
+        day = user_days.get(date_str, {})
+        if day.get("alcohol") == "마셨다":
             break
-    return count
+        streak_alcohol += 1
+        cur -= timedelta(days=1)
+
+    return streak_coffee, streak_alcohol
 
 
-def count_in_month(username: str, year: int, month: int, key: str) -> int:
-    """해당 달에 '마신 날' 개수"""
-    user_data = get_user_data(username)
-    cnt = 0
-    d = date(year, month, 1)
-    while d.month == month:
-        data = user_data.get(d.isoformat())
-        if data and data.get(key) == "마셨다":
-            cnt += 1
-        d += timedelta(days=1)
-    return cnt
+# ---------------------------
+# 이번 달 카운트
+# ---------------------------
+def calc_month_counts(user_days, year, month):
+    coffee_cnt = 0
+    alcohol_cnt = 0
+    for d in range(1, 32):
+        try:
+            dt = datetime(year, month, d)
+        except:
+            continue
+        ds = dt.strftime("%Y-%m-%d")
+        day = user_days.get(ds, {})
+        if day.get("coffee") == "마셨다":
+            coffee_cnt += 1
+        if day.get("alcohol") == "마셨다":
+            alcohol_cnt += 1
+    return coffee_cnt, alcohol_cnt
 
 
+# ---------------------------
+# 새로운 기능: 전체 사용자 “순위”
+# ---------------------------
+def calc_rankings(data, year, month):
+    users = data.get("users", {})
+
+    coffee_rank = []
+    alcohol_rank = []
+
+    for username, user_days in users.items():
+        c_cnt, a_cnt = calc_month_counts(user_days, year, month)
+        coffee_rank.append((username, c_cnt))
+        alcohol_rank.append((username, a_cnt))
+
+    # 많이 마신 순으로 정렬
+    coffee_rank.sort(key=lambda x: x[1], reverse=True)
+    alcohol_rank.sort(key=lambda x: x[1], reverse=True)
+
+    # TOP 10만
+    return coffee_rank[:10], alcohol_rank[:10]
+
+
+# ---------------------------
+# ROUTES
+# ---------------------------
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -83,99 +105,57 @@ def index():
 
 @app.route("/api/month")
 def api_month():
-    """
-    /api/month?user=홍길동&year=2025&month=11
-    해당 유저의 해당 달 데이터 + 통계 반환
-    """
-    username = request.args.get("user", "").strip()
-    if not username:
-        username = "default"
+    user = request.args.get("user", "default")
+    year = int(request.args.get("year"))
+    month = int(request.args.get("month"))
 
-    try:
-        year = int(request.args.get("year"))
-        month = int(request.args.get("month"))
-    except (TypeError, ValueError):
-        return jsonify({"error": "year/month 파라미터가 잘못되었습니다."}), 400
+    data = load_data()
+    users = data.get("users", {})
+    user_days = users.get(user, {})
 
-    user_data = get_user_data(username)
+    # streak
+    streak_coffee, streak_alcohol = calc_streak(user_days)
 
-    # 해당 달의 날짜들만 모아서 반환
-    days = {}
-    cal = calendar.Calendar(firstweekday=0)
-    for week in cal.monthdatescalendar(year, month):
-        for d in week:
-            if d.month == month:
-                ds = d.isoformat()
-                if ds in user_data:
-                    days[ds] = user_data[ds]
+    # month count
+    coffee_cnt, alcohol_cnt = calc_month_counts(user_days, year, month)
 
-    # 통계
-    coffee_streak = calc_streak(username, "coffee")
-    alcohol_streak = calc_streak(username, "alcohol")
-    coffee_month = count_in_month(username, year, month, "coffee")
-    alcohol_month = count_in_month(username, year, month, "alcohol")
+    # 전체 사용자 순위 추가
+    coffee_rank, alcohol_rank = calc_rankings(data, year, month)
 
-    stats = {
-        "coffee_streak": coffee_streak,
-        "alcohol_streak": alcohol_streak,
-        "coffee_month": coffee_month,
-        "alcohol_month": alcohol_month,
-    }
+    return jsonify({
+        "days": user_days,
+        "stats": {
+            "coffee_streak": streak_coffee,
+            "alcohol_streak": streak_alcohol,
+            "coffee_month": coffee_cnt,
+            "alcohol_month": alcohol_cnt,
 
-    return jsonify({"days": days, "stats": stats})
+            # ★ 추가된 부분
+            "coffee_rank": coffee_rank,
+            "alcohol_rank": alcohol_rank
+        }
+    })
 
 
 @app.route("/api/update", methods=["POST"])
 def api_update():
-    """
-    { "user": "홍길동", "date": "2025-11-28", "coffee": true/false, "alcohol": true/false }
-    """
-    body = request.get_json() or {}
-    username = (body.get("user") or "").strip()
-    if not username:
-        username = "default"
-
+    body = request.get_json()
+    user = body.get("user", "default")
     date_str = body.get("date")
-    if not date_str:
-        return jsonify({"error": "date가 없습니다."}), 400
 
-    try:
-        datetime.fromisoformat(date_str)
-    except Exception:
-        return jsonify({"error": "date 형식이 잘못되었습니다. YYYY-MM-DD"}), 400
+    data = load_data()
+    users = data.setdefault("users", {})
+    user_days = users.setdefault(user, {})
+    day = user_days.setdefault(date_str, {})
 
-    coffee_on = body.get("coffee")
-    alcohol_on = body.get("alcohol")
+    if "coffee" in body:
+        day["coffee"] = "마셨다" if body["coffee"] else "안 마셨다"
+    if "alcohol" in body:
+        day["alcohol"] = "마셨다" if body["alcohol"] else "안 마셨다"
 
-    user_data = get_user_data(username)
-    day_data = user_data.get(date_str, {})
-
-    # bool 값에 따라 저장
-    if coffee_on is True:
-        day_data["coffee"] = "마셨다"
-    elif coffee_on is False:
-        if "coffee" in day_data:
-            del day_data["coffee"]
-
-    if alcohol_on is True:
-        day_data["alcohol"] = "마셨다"
-    elif alcohol_on is False:
-        if "alcohol" in day_data:
-            del day_data["alcohol"]
-
-    # 둘 다 없으면 날짜도 삭제
-    if not day_data:
-        if date_str in user_data:
-            del user_data[date_str]
-    else:
-        user_data[date_str] = day_data
-
-    save_data()
-
+    save_data(data)
     return jsonify({"ok": True})
 
 
 if __name__ == "__main__":
-    load_data()
-    # host="0.0.0.0" 으로 하면 같은 와이파이의 다른 기기에서도 접속 가능
     app.run(debug=True, host="0.0.0.0", port=5000)

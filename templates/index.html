@@ -11,14 +11,14 @@
       color: #111827;
     }
     .app-container {
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 16px;
     }
     .header {
       background-color: #111827;
       color: #f9fafb;
-      padding: 12px 16px;
+      padding: 16px;
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -29,12 +29,21 @@
       font-weight: bold;
       color: #f87171;
     }
-    .header-spacer {
-      flex: 1;
+    .user-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 16px;
+    }
+    .user-input input {
+      border-radius: 9999px;
+      border: none;
+      padding: 6px 12px;
+      font-size: 13px;
     }
     .header button {
       border: none;
-      padding: 6px 10px;
+      padding: 6px 12px;
       border-radius: 9999px;
       background-color: #374151;
       color: #f9fafb;
@@ -43,19 +52,6 @@
     }
     .header button:hover {
       background-color: #4b5563;
-    }
-    .user-input {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #e5e7eb;
-      font-size: 12px;
-    }
-    .user-input input {
-      border-radius: 9999px;
-      border: none;
-      padding: 4px 10px;
-      font-size: 12px;
     }
 
     .calendar-card {
@@ -66,54 +62,44 @@
       box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.1),
                   0 4px 6px -4px rgba(15, 23, 42, 0.1);
     }
+
     .calendar-header {
       display: flex;
-      align-items: center;
       justify-content: center;
-      gap: 8px;
+      align-items: center;
+      gap: 16px;
       margin-bottom: 8px;
-    }
-    .calendar-header-title {
+      font-size: 18px;
       font-weight: bold;
-      font-size: 16px;
     }
     .calendar-header button {
       border: none;
       background: #e5e7eb;
       border-radius: 9999px;
-      padding: 4px 8px;
+      padding: 6px 10px;
       cursor: pointer;
-      font-size: 12px;
-    }
-    .calendar-header button:hover {
-      background: #d1d5db;
+      font-size: 14px;
     }
 
     .weekdays {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       margin-top: 8px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: bold;
       color: #6b7280;
-    }
-    .weekdays div {
       text-align: center;
-      padding: 4px 0;
     }
-    .weekdays .sat {
-      color: #3b82f6;
-    }
-    .weekdays .sun {
-      color: #ef4444;
-    }
+    .weekdays .sat { color: #3b82f6; }
+    .weekdays .sun { color: #ef4444; }
 
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 6px;
-      margin-top: 6px;
+      margin-top: 10px;
     }
+
     .day-cell-outer {
       background-color: #f9fafb;
       border-radius: 10px;
@@ -122,106 +108,111 @@
     .day-cell-inner {
       background-color: #f9fafb;
       border-radius: 8px;
-      min-height: 60px;
+      min-height: 70px;
       display: flex;
       flex-direction: column;
-      padding: 2px 4px;
+      padding: 4px;
       box-sizing: border-box;
-      transition: background-color 0.15s ease, box-shadow 0.15s ease;
     }
     .day-cell-inner.today {
       box-shadow: 0 0 0 2px #2563eb;
     }
     .day-number {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: bold;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
     .toggles-container {
-      margin-top: 2px;
-      font-size: 11px;
+      font-size: 12px;
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      gap: 2px;
     }
     .toggle-line {
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 2px;
+      gap: 4px;
+    }
+
+    .stats-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 6px;
     }
 
     .stats-card {
-      background-color: #fafafa;
+      background: white;
+      padding: 12px;
       border-radius: 12px;
-      padding: 10px 14px 12px;
       margin-top: 12px;
       border: 1px solid #e5e7eb;
     }
-    .stats-title {
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 4px;
+    .stats-line {
+      font-size: 13px;
+      margin: 2px 0;
     }
     .stats-group-title {
-      font-size: 13px;
+      margin-top: 10px;
+      font-size: 14px;
       font-weight: bold;
-      margin-top: 6px;
-      margin-bottom: 2px;
-    }
-    .stats-line {
-      font-size: 12px;
-      margin-left: 4px;
     }
 
-    .tip {
-      margin-top: 8px;
-      font-size: 11px;
-      color: #4b5563;
-      white-space: pre-line;
+    .rank-card {
+      background: white;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      margin-top: 12px;
+    }
+    .rank-title {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .rank-item {
+      font-size: 13px;
+      margin-left: 8px;
     }
   </style>
 </head>
 <body>
   <div class="app-container">
-    <!-- 헤더 -->
+
+    <!-- HEADER -->
     <div class="header">
       <div class="header-title">술달력 웹버전</div>
+
       <div class="user-input">
-        <span>사용자 이름:</span>
+        사용자 이름:
         <input id="username-input" type="text" placeholder="예: 홍길동" />
         <button id="user-apply-btn">적용</button>
       </div>
-      <div class="header-spacer"></div>
+
+      <div style="flex:1"></div>
       <button id="today-btn">오늘로</button>
     </div>
 
-    <!-- 달력 카드 -->
+    <!-- CALENDAR -->
     <div class="calendar-card">
       <div class="calendar-header">
         <button id="prev-month-btn">◀</button>
-        <div class="calendar-header-title" id="month-title"></div>
+        <div id="month-title"></div>
         <button id="next-month-btn">▶</button>
       </div>
 
       <div class="weekdays">
-        <div>월</div>
-        <div>화</div>
-        <div>수</div>
-        <div>목</div>
-        <div>금</div>
-        <div class="sat">토</div>
-        <div class="sun">일</div>
+        <div>월</div><div>화</div><div>수</div><div>목</div>
+        <div>금</div><div class="sat">토</div><div class="sun">일</div>
       </div>
 
       <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 
-    <!-- 통계 카드 -->
+    <!-- 통계 -->
     <div class="stats-card">
       <div class="stats-title">통계</div>
 
-      <div class="stats-group-title">연속으로 안 마신 일수 (오늘 기준)</div>
+      <div class="stats-group-title">연속으로 안 마신 일수</div>
       <div class="stats-line" id="coffee-streak">커피 안 마신 날: -일</div>
       <div class="stats-line" id="alcohol-streak">술 안 마신 날: -일</div>
 
@@ -230,246 +221,251 @@
       <div class="stats-line" id="alcohol-month">술 마신 날: -일</div>
     </div>
 
-    <div class="tip">
-Tip
-- 윗쪽에 사용자 이름을 적고 적용하면, 그 사람 전용 달력이 됩니다.
-- 날짜 칸에서 ‘○ 커피 / ● 술’ 을 클릭해 기록해요.
-- 술 마신 날: 연한 빨강 / 커피 마신 날: 주황 / 둘 다 안 마심: 연한 파랑
+    <!-- 순위 카드 -->
+    <div class="rank-card">
+      <div class="rank-title">전체 사용자 순위 (이번 달)</div>
+
+      <div class="stats-group-title">커피 많이 마신 순위</div>
+      <div id="coffee-rank-list"></div>
+
+      <div class="stats-group-title">술 많이 마신 순위</div>
+      <div id="alcohol-rank-list"></div>
     </div>
-  </div>
-  <!-- 여기까지가 HTML 본문 -->
+    <!-- JS 스크립트 -->
+    <script>
+      // ===== 기본 상태 =====
+      let currentUser = "default";
+      let currentYear;
+      let currentMonth;
+      let monthData = {};
+      let statsData = {};
 
-  <script>
-    // ==== 전역 상태 ====
-    let currentUser = "default";
-    let currentYear;
-    let currentMonth; // 1~12
-    let monthData = {}; // { "YYYY-MM-DD": { coffee: "마셨다", ... } }
-    let statsData = {};
+      const today = new Date();
+      currentYear = today.getFullYear();
+      currentMonth = today.getMonth() + 1;
 
-    // 오늘 기준 초기값
-    const today = new Date();
-    currentYear = today.getFullYear();
-    currentMonth = today.getMonth() + 1;
+      // ==== DOM ====
+      const usernameInput = document.getElementById("username-input");
+      const userApplyBtn = document.getElementById("user-apply-btn");
+      const todayBtn = document.getElementById("today-btn");
 
-    // ==== DOM 참조 ====
-    const usernameInput = document.getElementById("username-input");
-    const userApplyBtn = document.getElementById("user-apply-btn");
-    const todayBtn = document.getElementById("today-btn");
-    const prevMonthBtn = document.getElementById("prev-month-btn");
-    const nextMonthBtn = document.getElementById("next-month-btn");
-    const monthTitle = document.getElementById("month-title");
-    const calendarGrid = document.getElementById("calendar-grid");
+      const prevBtn = document.getElementById("prev-month-btn");
+      const nextBtn = document.getElementById("next-month-btn");
+      const monthTitle = document.getElementById("month-title");
+      const calendarGrid = document.getElementById("calendar-grid");
 
-    const coffeeStreakEl = document.getElementById("coffee-streak");
-    const alcoholStreakEl = document.getElementById("alcohol-streak");
-    const coffeeMonthEl = document.getElementById("coffee-month");
-    const alcoholMonthEl = document.getElementById("alcohol-month");
+      const coffeeStreakEl = document.getElementById("coffee-streak");
+      const alcoholStreakEl = document.getElementById("alcohol-streak");
+      const coffeeMonthEl = document.getElementById("coffee-month");
+      const alcoholMonthEl = document.getElementById("alcohol-month");
 
-    // ==== 유틸 ====
-    function pad2(n) {
-      return n < 10 ? "0" + n : "" + n;
-    }
+      const coffeeRankList = document.getElementById("coffee-rank-list");
+      const alcoholRankList = document.getElementById("alcohol-rank-list");
 
-    function getDateStr(y, m, d) {
-      return `${y}-${pad2(m)}-${pad2(d)}`;
-    }
+      // ==== 유틸 ====
+      const pad = (n) => (n < 10 ? "0" + n : "" + n);
+      const getDateStr = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
 
-    function toKoreanMonth(y, m) {
-      return `${y}년 ${m}월`;
-    }
+      const weekdayMon = (jsDay) => (jsDay + 6) % 7;
 
-    // Monday-based weekday index 변환
-    function weekdayIndexMonStart(jsDay) {
-      // JS: 0=Sun,1=Mon,...6=Sat → Mon=0 ... Sun=6
-      return (jsDay + 6) % 7;
-    }
+      // ==== API ====
+      async function fetchMonthData() {
+        const url = `/api/month?user=${encodeURIComponent(currentUser)}&year=${currentYear}&month=${currentMonth}`;
+        const res = await fetch(url);
+        const data = await res.json();
 
-    // ==== API 호출 ====
-    async function fetchMonthData() {
-      const user = currentUser || "default";
-      const url = `/api/month?user=${encodeURIComponent(user)}&year=${currentYear}&month=${currentMonth}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-      monthData = data.days || {};
-      statsData = data.stats || {};
-      renderCalendar();
-      renderStats();
-    }
+        monthData = data.days || {};
+        statsData = data.stats || {};
 
-    async function updateDay(dateStr, key, newOn) {
-      const body = {
-        user: currentUser || "default",
-        date: dateStr,
-      };
-      if (key === "coffee") {
-        body.coffee = newOn;
-      } else if (key === "alcohol") {
-        body.alcohol = newOn;
+        renderCalendar();
+        renderStats();
+        renderRanks();
       }
 
-      const res = await fetch("/api/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (data.error) {
-        alert(data.error);
-        return;
+      async function updateDay(dateStr, key, newOn) {
+        const body = {
+          user: currentUser,
+          date: dateStr,
+        };
+        if (key === "coffee") body.coffee = newOn;
+        if (key === "alcohol") body.alcohol = newOn;
+
+        await fetch("/api/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        fetchMonthData();
       }
 
-      await fetchMonthData();
-    }
+      // ==== 통계 렌더 ====
+      function renderStats() {
+        coffeeStreakEl.textContent = `커피 안 마신 날: ${statsData.coffee_streak ?? "-"}일`;
+        alcoholStreakEl.textContent = `술 안 마신 날: ${statsData.alcohol_streak ?? "-"}일`;
 
-    // ==== 렌더링 ====
-    function renderStats() {
-      coffeeStreakEl.textContent = `커피 안 마신 날: ${statsData.coffee_streak ?? "-"}일`;
-      alcoholStreakEl.textContent = `술 안 마신 날: ${statsData.alcohol_streak ?? "-"}일`;
-      coffeeMonthEl.textContent = `커피 마신 날: ${statsData.coffee_month ?? "-"}일`;
-      alcoholMonthEl.textContent = `술 마신 날: ${statsData.alcohol_month ?? "-"}일`;
-    }
-
-    function renderCalendar() {
-      monthTitle.textContent = toKoreanMonth(currentYear, currentMonth);
-      calendarGrid.innerHTML = "";
-
-      const firstDate = new Date(currentYear, currentMonth - 1, 1);
-      const lastDate = new Date(currentYear, currentMonth, 0);
-      const daysInMonth = lastDate.getDate();
-
-      const firstWeekday = weekdayIndexMonStart(firstDate.getDay()); // 0=월
-
-      // 앞쪽 빈 칸
-      for (let i = 0; i < firstWeekday; i++) {
-        const emptyCell = document.createElement("div");
-        calendarGrid.appendChild(emptyCell);
+        coffeeMonthEl.textContent = `커피 마신 날: ${statsData.coffee_month ?? "-"}일`;
+        alcoholMonthEl.textContent = `술 마신 날: ${statsData.alcohol_month ?? "-"}일`;
       }
 
-      // 날짜 칸
-      for (let d = 1; d <= daysInMonth; d++) {
-        const cellDate = new Date(currentYear, currentMonth - 1, d);
-        const dateStr = getDateStr(currentYear, currentMonth, d);
+      // ==== 순위 렌더 ====
+      function renderRanks() {
+        const coffeeRank = statsData.coffee_rank || [];
+        const alcoholRank = statsData.alcohol_rank || [];
 
-        const dayData = monthData[dateStr] || {};
-        const coffeeOn = dayData.coffee === "마셨다";
-        const alcoholOn = dayData.alcohol === "마셨다";
+        coffeeRankList.innerHTML = "";
+        alcoholRankList.innerHTML = "";
 
-        // 배경색 결정
-        let bgColor = "#e0f2fe"; // 둘 다 안 마심
-        if (alcoholOn) {
-          bgColor = "#fecaca";  // 술 마심
-        } else if (coffeeOn) {
-          bgColor = "#fed7aa";  // 커피 마심
-        }
-
-        const outer = document.createElement("div");
-        outer.className = "day-cell-outer";
-
-        const inner = document.createElement("div");
-        inner.className = "day-cell-inner";
-        inner.style.backgroundColor = bgColor;
-
-        // 오늘 날짜 테두리
-        const isToday =
-          cellDate.getFullYear() === today.getFullYear() &&
-          cellDate.getMonth() === today.getMonth() &&
-          cellDate.getDate() === today.getDate();
-
-        if (isToday) inner.classList.add("today");
-
-        // 숫자
-        const dayNumber = document.createElement("div");
-        dayNumber.className = "day-number";
-        dayNumber.textContent = String(d);
-
-        // 토글 UI
-        const toggles = document.createElement("div");
-        toggles.className = "toggles-container";
-
-        function createToggleLine(labelText, isOn, onColor, key) {
-          const line = document.createElement("div");
-          line.className = "toggle-line";
-
-          const circle = document.createElement("span");
-          circle.textContent = isOn ? "●" : "○";
-          circle.style.color = isOn ? onColor : "#9ca3af";
-
-          const text = document.createElement("span");
-          text.textContent = labelText;
-
-          line.appendChild(circle);
-          line.appendChild(text);
-
-          line.addEventListener("click", () => {
-            const newOnState = !isOn;
-            updateDay(dateStr, key, newOnState);
+        if (coffeeRank.length === 0) {
+          coffeeRankList.innerHTML = "<div class='rank-item'>데이터 없음</div>";
+        } else {
+          coffeeRank.forEach((item, idx) => {
+            const div = document.createElement("div");
+            div.className = "rank-item";
+            div.textContent = `${idx + 1}위: ${item[0]} (${item[1]}일 마심)`;
+            coffeeRankList.appendChild(div);
           });
-
-          return line;
         }
 
-        const coffeeLine = createToggleLine("커피", coffeeOn, "#f97316", "coffee");
-        const alcoholLine = createToggleLine("술", alcoholOn, "#dc2626", "alcohol");
-
-        toggles.appendChild(coffeeLine);
-        toggles.appendChild(alcoholLine);
-
-        // 조립
-        inner.appendChild(dayNumber);
-        inner.appendChild(toggles);
-
-        outer.appendChild(inner);
-        calendarGrid.appendChild(outer);
+        if (alcoholRank.length === 0) {
+          alcoholRankList.innerHTML = "<div class='rank-item'>데이터 없음</div>";
+        } else {
+          alcoholRank.forEach((item, idx) => {
+            const div = document.createElement("div");
+            div.className = "rank-item";
+            div.textContent = `${idx + 1}위: ${item[0]} (${item[1]}일 마심)`;
+            alcoholRankList.appendChild(div);
+          });
+        }
       }
-    }
 
-    // ==== 이벤트 연결 ====
-    userApplyBtn.addEventListener("click", () => {
-      const name = usernameInput.value.trim();
-      currentUser = name || "default";
-      localStorage.setItem("sul_calendar_user", currentUser);
-      fetchMonthData();
-    });
+      // ==== 달력 렌더 ====
+      function renderCalendar() {
+        monthTitle.textContent = `${currentYear}년 ${currentMonth}월`;
+        calendarGrid.innerHTML = "";
 
-    todayBtn.addEventListener("click", () => {
-      const now = new Date();
-      currentYear = now.getFullYear();
-      currentMonth = now.getMonth() + 1;
-      fetchMonthData();
-    });
+        const firstDate = new Date(currentYear, currentMonth - 1, 1);
+        const lastDate = new Date(currentYear, currentMonth, 0);
+        const days = lastDate.getDate();
 
-    prevMonthBtn.addEventListener("click", () => {
-      currentMonth -= 1;
-      if (currentMonth === 0) {
-        currentMonth = 12;
-        currentYear -= 1;
+        const firstWeekday = weekdayMon(firstDate.getDay());
+
+        // 빈 칸 채우기
+        for (let i = 0; i < firstWeekday; i++) {
+          calendarGrid.appendChild(document.createElement("div"));
+        }
+
+        // 날짜 칸
+        for (let d = 1; d <= days; d++) {
+          const dateStr = getDateStr(currentYear, currentMonth, d);
+          const dt = new Date(currentYear, currentMonth - 1, d);
+
+          const dayData = monthData[dateStr] || {};
+          const coffeeOn = dayData.coffee === "마셨다";
+          const alcoholOn = dayData.alcohol === "마셨다";
+
+          // 색상 결정
+          let bg = "#e0f2fe"; // 둘 다 안 마심
+          if (alcoholOn) bg = "#fecaca";       // 술
+          else if (coffeeOn) bg = "#fed7aa";   // 커피
+
+          const outer = document.createElement("div");
+          outer.className = "day-cell-outer";
+
+          const inner = document.createElement("div");
+          inner.className = "day-cell-inner";
+          inner.style.backgroundColor = bg;
+
+          // 오늘 표시
+          if (
+            dt.getFullYear() === today.getFullYear() &&
+            dt.getMonth() === today.getMonth() &&
+            dt.getDate() === today.getDate()
+          ) {
+            inner.classList.add("today");
+          }
+
+          // 숫자
+          const dayNum = document.createElement("div");
+          dayNum.className = "day-number";
+          dayNum.textContent = d;
+
+          const toggles = document.createElement("div");
+          toggles.className = "toggles-container";
+
+          function makeToggle(label, isOn, color, key) {
+            const line = document.createElement("div");
+            line.className = "toggle-line";
+
+            const circle = document.createElement("span");
+            circle.textContent = isOn ? "●" : "○";
+            circle.style.color = isOn ? color : "#9ca3af";
+
+            const txt = document.createElement("span");
+            txt.textContent = label;
+
+            line.appendChild(circle);
+            line.appendChild(txt);
+
+            line.onclick = () => updateDay(dateStr, key, !isOn);
+
+            return line;
+          }
+
+          toggles.appendChild(makeToggle("커피", coffeeOn, "#f97316", "coffee"));
+          toggles.appendChild(makeToggle("술", alcoholOn, "#dc2626", "alcohol"));
+
+          inner.appendChild(dayNum);
+          inner.appendChild(toggles);
+          outer.appendChild(inner);
+          calendarGrid.appendChild(outer);
+        }
       }
-      fetchMonthData();
-    });
 
-    nextMonthBtn.addEventListener("click", () => {
-      currentMonth += 1;
-      if (currentMonth === 13) {
-        currentMonth = 1;
-        currentYear += 1;
+      // ==== 이벤트 ====
+      userApplyBtn.onclick = () => {
+        const name = usernameInput.value.trim();
+        currentUser = name || "default";
+        localStorage.setItem("sul_calendar_user", currentUser);
+        fetchMonthData();
+      };
+
+      todayBtn.onclick = () => {
+        const now = new Date();
+        currentYear = now.getFullYear();
+        currentMonth = now.getMonth() + 1;
+        fetchMonthData();
+      };
+
+      prevBtn.onclick = () => {
+        currentMonth--;
+        if (currentMonth === 0) {
+          currentMonth = 12;
+          currentYear--;
+        }
+        fetchMonthData();
+      };
+
+      nextBtn.onclick = () => {
+        currentMonth++;
+        if (currentMonth === 13) {
+          currentMonth = 1;
+          currentYear++;
+        }
+        fetchMonthData();
+      };
+
+      // 자동 사용자 복원
+      const saved = localStorage.getItem("sul_calendar_user");
+      if (saved) {
+        currentUser = saved;
+        usernameInput.value = saved === "default" ? "" : saved;
       }
+
+      // 첫 로딩
       fetchMonthData();
-    });
+    </script>
 
-    // 저장된 유저 자동 로드
-    const savedUser = localStorage.getItem("sul_calendar_user");
-    if (savedUser) {
-      currentUser = savedUser;
-      usernameInput.value = savedUser === "default" ? "" : savedUser;
-    }
-
-    // 첫 로딩
-    fetchMonthData();
-  </script>
+  </div>
 </body>
 </html>
