@@ -207,9 +207,15 @@
       <div class="stats-line" id="coffee-streak">커피 안 마신 날: -일</div>
       <div class="stats-line" id="alcohol-streak">술 안 마신 날: -일</div>
 
-      <div class="stats-group-title">이번 달 요약</div>
+      <div class="stats-group-title">이번 달 요약 (날 수)</div>
       <div class="stats-line" id="coffee-month">커피 마신 날: -일</div>
       <div class="stats-line" id="alcohol-month">술 마신 날: -일</div>
+
+      <div class="stats-group-title">이번 달 술 종류별 합계</div>
+      <div class="stats-line" id="sum-soju">소주: -병</div>
+      <div class="stats-line" id="sum-beer">맥주: -잔</div>
+      <div class="stats-line" id="sum-whisky">양주: -잔</div>
+      <div class="stats-line" id="sum-wine">와인: -잔</div>
     </div>
 
     <!-- 순위 -->
@@ -249,6 +255,11 @@
       const coffeeMonthEl = document.getElementById("coffee-month");
       const alcoholMonthEl = document.getElementById("alcohol-month");
 
+      const sumSojuEl = document.getElementById("sum-soju");
+      const sumBeerEl = document.getElementById("sum-beer");
+      const sumWhiskyEl = document.getElementById("sum-whisky");
+      const sumWineEl = document.getElementById("sum-wine");
+
       const coffeeRankList = document.getElementById("coffee-rank-list");
       const alcoholRankList = document.getElementById("alcohol-rank-list");
 
@@ -275,10 +286,14 @@
         renderRanks();
       }
 
-      async function updateDay(dateStr, key, newOn) {
-        const body = { user: currentUser, date: dateStr };
-        if (key === "coffee") body.coffee = newOn;
-        if (key === "alcohol") body.alcohol = newOn;
+      async function updateDay(dateStr, bodyExtra) {
+        const body = Object.assign(
+          {
+            user: currentUser,
+            date: dateStr,
+          },
+          bodyExtra || {}
+        );
 
         await fetch("/api/update", {
           method: "POST",
@@ -299,6 +314,15 @@
           `커피 마신 날: ${statsData.coffee_month ?? "-"}일`;
         alcoholMonthEl.textContent =
           `술 마신 날: ${statsData.alcohol_month ?? "-"}일`;
+
+        sumSojuEl.textContent =
+          `소주: ${statsData.soju_total ?? 0}병`;
+        sumBeerEl.textContent =
+          `맥주: ${statsData.beer_total ?? 0}잔`;
+        sumWhiskyEl.textContent =
+          `양주: ${statsData.whisky_total ?? 0}잔`;
+        sumWineEl.textContent =
+          `와인: ${statsData.wine_total ?? 0}잔`;
       }
 
       // ---- 렌더: 순위 ----
@@ -356,6 +380,11 @@
           const coffeeOn = dayData.coffee === "마셨다";
           const alcoholOn = dayData.alcohol === "마셨다";
 
+          const soju = dayData.soju ?? 0;
+          const beer = dayData.beer ?? 0;
+          const whisky = dayData.whisky ?? 0;
+          const wine = dayData.wine ?? 0;
+
           let bg = "#e0f2fe";        // 둘 다 안 마심
           if (alcoholOn) bg = "#fecaca";      // 술
           else if (coffeeOn) bg = "#fed7aa";  // 커피
@@ -382,22 +411,64 @@
           const toggles = document.createElement("div");
           toggles.className = "toggles-container";
 
-          function makeToggle(label, isOn, color, key) {
-            const line = document.createElement("div");
-            line.className = "toggle-line";
-            const circle = document.createElement("span");
-            circle.textContent = isOn ? "●" : "○";
-            circle.style.color = isOn ? color : "#9ca3af";
-            const txt = document.createElement("span");
-            txt.textContent = label;
-            line.appendChild(circle);
-            line.appendChild(txt);
-            line.onclick = () => updateDay(dateStr, key, !isOn);
-            return line;
-          }
+          // 커피 토글: 단순 ON/OFF
+          const coffeeLine = document.createElement("div");
+          coffeeLine.className = "toggle-line";
+          const coffeeCircle = document.createElement("span");
+          coffeeCircle.textContent = coffeeOn ? "●" : "○";
+          coffeeCircle.style.color = coffeeOn ? "#f97316" : "#9ca3af";
+          const coffeeText = document.createElement("span");
+          coffeeText.textContent = "커피";
+          coffeeLine.appendChild(coffeeCircle);
+          coffeeLine.appendChild(coffeeText);
+          coffeeLine.onclick = () => {
+            const newOn = !coffeeOn;
+            updateDay(dateStr, { coffee: newOn });
+          };
 
-          toggles.appendChild(makeToggle("커피", coffeeOn, "#f97316", "coffee"));
-          toggles.appendChild(makeToggle("술", alcoholOn, "#dc2626", "alcohol"));
+          // 술 토글: 클릭 시 양 입력
+          const alcoholLine = document.createElement("div");
+          alcoholLine.className = "toggle-line";
+          const alcoholCircle = document.createElement("span");
+          alcoholCircle.textContent = alcoholOn ? "●" : "○";
+          alcoholCircle.style.color = alcoholOn ? "#dc2626" : "#9ca3af";
+          const alcoholText = document.createElement("span");
+          alcoholText.textContent = "술";
+          alcoholLine.appendChild(alcoholCircle);
+          alcoholLine.appendChild(alcoholText);
+
+          alcoholLine.onclick = () => {
+            const prev = `${soju},${beer},${whisky},${wine}`;
+            const msg =
+              "소주(병), 맥주(잔), 양주(잔), 와인(잔) 순서로 쉼표로 입력해주세요.\n예: 1,2,0,0";
+            const input = window.prompt(msg, prev);
+
+            if (input === null) {
+              // 취소
+              return;
+            }
+
+            const parts = input.split(",").map((x) => x.trim());
+            while (parts.length < 4) parts.push("0");
+            const s = parseInt(parts[0] || "0", 10) || 0;
+            const b = parseInt(parts[1] || "0", 10) || 0;
+            const w = parseInt(parts[2] || "0", 10) || 0;
+            const wi = parseInt(parts[3] || "0", 10) || 0;
+
+            const total = s + b + w + wi;
+            const hasDrink = total > 0;
+
+            updateDay(dateStr, {
+              alcohol: hasDrink,
+              soju: s,
+              beer: b,
+              whisky: w,
+              wine: wi,
+            });
+          };
+
+          toggles.appendChild(coffeeLine);
+          toggles.appendChild(alcoholLine);
 
           inner.appendChild(dayNumber);
           inner.appendChild(toggles);
