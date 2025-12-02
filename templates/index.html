@@ -11,7 +11,7 @@
       color: #111827;
     }
     .app-container {
-      max-width: 1100px;
+      max-width: 1150px;
       margin: 0 auto;
       padding: 16px;
     }
@@ -54,10 +54,23 @@
       background-color: #4b5563;
     }
 
+    .user-warning {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #b91c1c;
+    }
+
+    /* 메인 레이아웃: 왼쪽 달력+통계 / 오른쪽 순위 */
+    .layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
     .calendar-card {
       background-color: #ffffff;
       border-radius: 12px;
-      margin-top: 12px;
       padding: 12px 16px 16px;
       box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.1),
                   0 4px 6px -4px rgba(15, 23, 42, 0.1);
@@ -140,17 +153,15 @@
       margin-top: 2px;
       color: #374151;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .stats-card, .rank-card {
       background: white;
       padding: 12px;
       border-radius: 12px;
-      margin-top: 12px;
       border: 1px solid #e5e7eb;
     }
+
     .stats-title {
       font-size: 16px;
       font-weight: bold;
@@ -165,9 +176,11 @@
       font-size: 13px;
       margin: 2px 0;
     }
+
     .rank-title {
       font-size: 16px;
       font-weight: bold;
+      margin-bottom: 4px;
     }
     .rank-item {
       font-size: 13px;
@@ -176,380 +189,383 @@
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <!-- HEADER -->
-    <div class="header">
-      <div class="header-title">술달력 웹버전</div>
+<div class="app-container">
 
-      <div class="user-input">
-        사용자 이름:
-        <input id="username-input" type="text" placeholder="예: 홍길동" />
-        <button id="user-apply-btn">적용</button>
-      </div>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-title">술달력 웹버전</div>
 
-      <div style="flex:1"></div>
-      <button id="today-btn">오늘로</button>
+    <div class="user-input">
+      사용자 이름:
+      <input id="username-input" type="text" placeholder="예: 홍길동" />
+      <button id="user-apply-btn">적용</button>
     </div>
 
-    <!-- CALENDAR -->
-    <div class="calendar-card">
-      <div class="calendar-header">
-        <button id="prev-month-btn">◀</button>
-        <div id="month-title"></div>
-        <button id="next-month-btn">▶</button>
-      </div>
-
-      <div class="weekdays">
-        <div>월</div><div>화</div><div>수</div><div>목</div>
-        <div>금</div><div class="sat">토</div><div class="sun">일</div>
-      </div>
-
-      <div class="calendar-grid" id="calendar-grid"></div>
-    </div>
-
-    <!-- 통계 -->
-    <div class="stats-card">
-      <div class="stats-title">통계</div>
-
-      <div class="stats-group-title">연속으로 안 마신 일수 (오늘 기준)</div>
-      <div class="stats-line" id="coffee-streak">커피 안 마신 날: -일</div>
-      <div class="stats-line" id="alcohol-streak">술 안 마신 날: -일</div>
-
-      <div class="stats-group-title">이번 달 요약 (날 수)</div>
-      <div class="stats-line" id="coffee-month">커피 마신 날: -일</div>
-      <div class="stats-line" id="alcohol-month">술 마신 날: -일</div>
-
-      <div class="stats-group-title">이번 달 술 종류별 합계</div>
-      <div class="stats-line" id="sum-soju">소주: -병</div>
-      <div class="stats-line" id="sum-beer">맥주: -잔</div>
-      <div class="stats-line" id="sum-whisky">양주: -잔</div>
-      <div class="stats-line" id="sum-wine">와인: -잔</div>
-      <div class="stats-line" id="sum-makgeolli">막걸리: -잔</div>
-    </div>
-
-    <!-- 순위 -->
-    <div class="rank-card">
-      <div class="rank-title">전체 사용자 순위 (이번 달)</div>
-
-      <div class="stats-group-title">커피 많이 마신 순위</div>
-      <div id="coffee-rank-list"></div>
-
-      <div class="stats-group-title">술 많이 마신 순위</div>
-      <div id="alcohol-rank-list"></div>
-    </div>
-
-    <script>
-      // ===== 상태 =====
-      let currentUser = "default";
-      let currentYear;
-      let currentMonth;
-      let monthData = {};
-      let statsData = {};
-
-      const today = new Date();
-      currentYear = today.getFullYear();
-      currentMonth = today.getMonth() + 1;
-
-      // DOM
-      const usernameInput = document.getElementById("username-input");
-      const userApplyBtn = document.getElementById("user-apply-btn");
-      const todayBtn = document.getElementById("today-btn");
-      const prevBtn = document.getElementById("prev-month-btn");
-      const nextBtn = document.getElementById("next-month-btn");
-      const monthTitle = document.getElementById("month-title");
-      const calendarGrid = document.getElementById("calendar-grid");
-
-      const coffeeStreakEl = document.getElementById("coffee-streak");
-      const alcoholStreakEl = document.getElementById("alcohol-streak");
-      const coffeeMonthEl = document.getElementById("coffee-month");
-      const alcoholMonthEl = document.getElementById("alcohol-month");
-
-      const sumSojuEl = document.getElementById("sum-soju");
-      const sumBeerEl = document.getElementById("sum-beer");
-      const sumWhiskyEl = document.getElementById("sum-whisky");
-      const sumWineEl = document.getElementById("sum-wine");
-      const sumMakgeolliEl = document.getElementById("sum-makgeolli");
-
-      const coffeeRankList = document.getElementById("coffee-rank-list");
-      const alcoholRankList = document.getElementById("alcohol-rank-list");
-
-      const pad = (n) => (n < 10 ? "0" + n : "" + n);
-      const getDateStr = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
-      const weekdayMon = (jsDay) => (jsDay + 6) % 7; // Sun=0 → Mon=0
-
-      // ---- API ----
-      async function fetchMonthData() {
-        const url = `/api/month?user=${encodeURIComponent(currentUser)}&year=${currentYear}&month=${currentMonth}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (data.error) {
-          alert(data.error);
-          return;
-        }
-
-        monthData = data.days || {};
-        statsData = data.stats || {};
-
-        renderCalendar();
-        renderStats();
-        renderRanks();
-      }
-
-      async function updateDay(dateStr, bodyExtra) {
-        const body = Object.assign(
-          {
-            user: currentUser,
-            date: dateStr,
-          },
-          bodyExtra || {}
-        );
-
-        await fetch("/api/update", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-
-        fetchMonthData();
-      }
-
-      // ---- 렌더: 통계 ----
-      function renderStats() {
-        coffeeStreakEl.textContent =
-          `커피 안 마신 날: ${statsData.coffee_streak ?? "-"}일`;
-        alcoholStreakEl.textContent =
-          `술 안 마신 날: ${statsData.alcohol_streak ?? "-"}일`;
-        coffeeMonthEl.textContent =
-          `커피 마신 날: ${statsData.coffee_month ?? "-"}일`;
-        alcoholMonthEl.textContent =
-          `술 마신 날: ${statsData.alcohol_month ?? "-"}일`;
-
-        sumSojuEl.textContent =
-          `소주: ${statsData.soju_total ?? 0}병`;
-        sumBeerEl.textContent =
-          `맥주: ${statsData.beer_total ?? 0}잔`;
-        sumWhiskyEl.textContent =
-          `양주: ${statsData.whisky_total ?? 0}잔`;
-        sumWineEl.textContent =
-          `와인: ${statsData.wine_total ?? 0}잔`;
-        sumMakgeolliEl.textContent =
-          `막걸리: ${statsData.makgeolli_total ?? 0}잔`;
-      }
-
-      // ---- 렌더: 순위 ----
-      function renderRanks() {
-        const coffeeRank = statsData.coffee_rank || [];
-        const alcoholRank = statsData.alcohol_rank || [];
-
-        coffeeRankList.innerHTML = "";
-        alcoholRankList.innerHTML = "";
-
-        if (coffeeRank.length === 0) {
-          coffeeRankList.innerHTML = "<div class='rank-item'>데이터 없음</div>";
-        } else {
-          coffeeRank.forEach((item, idx) => {
-            const div = document.createElement("div");
-            div.className = "rank-item";
-            div.textContent = `${idx + 1}위: ${item[0]} (${item[1]}일 마심)`;
-            coffeeRankList.appendChild(div);
-          });
-        }
-
-        if (alcoholRank.length === 0) {
-          alcoholRankList.innerHTML = "<div class='rank-item'>데이터 없음</div>";
-        } else {
-          alcoholRank.forEach((item, idx) => {
-            const div = document.createElement("div");
-            div.className = "rank-item";
-            div.textContent = `${idx + 1}위: ${item[0]} (${item[1]}일 마심)`;
-            alcoholRankList.appendChild(div);
-          });
-        }
-      }
-
-      // ---- 렌더: 달력 ----
-      function renderCalendar() {
-        monthTitle.textContent = `${currentYear}년 ${currentMonth}월`;
-        calendarGrid.innerHTML = "";
-
-        const firstDate = new Date(currentYear, currentMonth - 1, 1);
-        const lastDate = new Date(currentYear, currentMonth, 0);
-        const daysInMonth = lastDate.getDate();
-
-        const firstWeekday = weekdayMon(firstDate.getDay());
-
-        // 앞쪽 빈 칸
-        for (let i = 0; i < firstWeekday; i++) {
-          calendarGrid.appendChild(document.createElement("div"));
-        }
-
-        for (let d = 1; d <= daysInMonth; d++) {
-          const dateStr = getDateStr(currentYear, currentMonth, d);
-          const jsDate = new Date(currentYear, currentMonth - 1, d);
-
-          const dayData = monthData[dateStr] || {};
-          const coffeeOn = dayData.coffee === "마셨다";
-          const alcoholOn = dayData.alcohol === "마셨다";
-
-          const soju = dayData.soju ?? 0;
-          const beer = dayData.beer ?? 0;
-          const whisky = dayData.whisky ?? 0;
-          const wine = dayData.wine ?? 0;
-          const makgeolli = dayData.makgeolli ?? 0;
-
-          let bg = "#e0f2fe";        // 둘 다 안 마심
-          if (alcoholOn) bg = "#fecaca";      // 술
-          else if (coffeeOn) bg = "#fed7aa";  // 커피
-
-          const outer = document.createElement("div");
-          outer.className = "day-cell-outer";
-
-          const inner = document.createElement("div");
-          inner.className = "day-cell-inner";
-          inner.style.backgroundColor = bg;
-
-          if (
-            jsDate.getFullYear() === today.getFullYear() &&
-            jsDate.getMonth() === today.getMonth() &&
-            jsDate.getDate() === today.getDate()
-          ) {
-            inner.classList.add("today");
-          }
-
-          const dayNumber = document.createElement("div");
-          dayNumber.className = "day-number";
-          dayNumber.textContent = String(d);
-
-          const toggles = document.createElement("div");
-          toggles.className = "toggles-container";
-
-          // 커피 토글: 단순 ON/OFF
-          const coffeeLine = document.createElement("div");
-          coffeeLine.className = "toggle-line";
-          const coffeeCircle = document.createElement("span");
-          coffeeCircle.textContent = coffeeOn ? "●" : "○";
-          coffeeCircle.style.color = coffeeOn ? "#f97316" : "#9ca3af";
-          const coffeeText = document.createElement("span");
-          coffeeText.textContent = "커피";
-          coffeeLine.appendChild(coffeeCircle);
-          coffeeLine.appendChild(coffeeText);
-          coffeeLine.onclick = () => {
-            const newOn = !coffeeOn;
-            updateDay(dateStr, { coffee: newOn });
-          };
-
-          // 술 토글: 클릭 시 양 입력
-          const alcoholLine = document.createElement("div");
-          alcoholLine.className = "toggle-line";
-          const alcoholCircle = document.createElement("span");
-          alcoholCircle.textContent = alcoholOn ? "●" : "○";
-          alcoholCircle.style.color = alcoholOn ? "#dc2626" : "#9ca3af";
-          const alcoholText = document.createElement("span");
-          alcoholText.textContent = "술";
-          alcoholLine.appendChild(alcoholCircle);
-          alcoholLine.appendChild(alcoholText);
-
-          alcoholLine.onclick = () => {
-            const prev = `${soju},${beer},${whisky},${wine},${makgeolli}`;
-            const msg =
-              "소주(병), 맥주(잔), 양주(잔), 와인(잔), 막걸리(잔) 순서로 쉼표로 입력해주세요.\n예: 1,2,0,0,1";
-            const input = window.prompt(msg, prev);
-
-            if (input === null) {
-              // 취소
-              return;
-            }
-
-            const parts = input.split(",").map((x) => x.trim());
-            while (parts.length < 5) parts.push("0");
-            const s = parseInt(parts[0] || "0", 10) || 0;
-            const b = parseInt(parts[1] || "0", 10) || 0;
-            const w = parseInt(parts[2] || "0", 10) || 0;
-            const wi = parseInt(parts[3] || "0", 10) || 0;
-            const m = parseInt(parts[4] || "0", 10) || 0;
-
-            const total = s + b + w + wi + m;
-            const hasDrink = total > 0;
-
-            updateDay(dateStr, {
-              alcohol: hasDrink,
-              soju: s,
-              beer: b,
-              whisky: w,
-              wine: wi,
-              makgeolli: m,
-            });
-          };
-
-          toggles.appendChild(coffeeLine);
-          toggles.appendChild(alcoholLine);
-
-          // ===== 술 양 요약 한 줄 표시 (소1 맥2 양1 와1 막1) =====
-          const parts = [];
-          if (soju > 0) parts.push(`소${soju}`);
-          if (beer > 0) parts.push(`맥${beer}`);
-          if (whisky > 0) parts.push(`양${whisky}`);
-          if (wine > 0) parts.push(`와${wine}`);
-          if (makgeolli > 0) parts.push(`막${makgeolli}`);
-
-          if (parts.length > 0) {
-            const summary = document.createElement("div");
-            summary.className = "drink-summary";
-            summary.textContent = parts.join(" ");
-            toggles.appendChild(summary);
-          }
-
-          inner.appendChild(dayNumber);
-          inner.appendChild(toggles);
-          outer.appendChild(inner);
-          calendarGrid.appendChild(outer);
-        }
-      }
-
-      // ---- 이벤트 ----
-      userApplyBtn.onclick = () => {
-        const name = usernameInput.value.trim();
-        currentUser = name || "default";
-        localStorage.setItem("sul_calendar_user", currentUser);
-        fetchMonthData();
-      };
-
-      todayBtn.onclick = () => {
-        const now = new Date();
-        currentYear = now.getFullYear();
-        currentMonth = now.getMonth() + 1;
-        fetchMonthData();
-      };
-
-      prevBtn.onclick = () => {
-        currentMonth--;
-        if (currentMonth === 0) {
-          currentMonth = 12;
-          currentYear--;
-        }
-        fetchMonthData();
-      };
-
-      nextBtn.onclick = () => {
-        currentMonth++;
-        if (currentMonth === 13) {
-          currentMonth = 1;
-          currentYear++;
-        }
-        fetchMonthData();
-      };
-
-      // 저장된 사용자 이름 복원
-      const savedUser = localStorage.getItem("sul_calendar_user");
-      if (savedUser) {
-        currentUser = savedUser;
-        usernameInput.value = savedUser === "default" ? "" : savedUser;
-      }
-
-      // 첫 로딩
-      fetchMonthData();
-    </script>
+    <div style="flex:1"></div>
+    <button id="today-btn">오늘로</button>
   </div>
+  <div id="user-warning" class="user-warning" style="display:none;">
+    ※ 이름을 입력하고 적용하면 순위에 반영됩니다. (default 사용자는 순위에서 제외)
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="layout">
+
+    <!-- 왼쪽: 달력 + 통계 -->
+    <div>
+      <div class="calendar-card">
+        <div class="calendar-header">
+          <button id="prev-month-btn">◀</button>
+          <div id="month-title"></div>
+          <button id="next-month-btn">▶</button>
+        </div>
+
+        <div class="weekdays">
+          <div>월</div><div>화</div><div>수</div><div>목</div>
+          <div>금</div><div class="sat">토</div><div class="sun">일</div>
+        </div>
+
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </div>
+
+      <!-- 통계 -->
+      <div class="stats-card">
+        <div class="stats-title">통계</div>
+
+        <div class="stats-group-title">연속으로 안 마신 일수 (오늘 기준)</div>
+        <div class="stats-line" id="coffee-streak"></div>
+        <div class="stats-line" id="alcohol-streak"></div>
+
+        <div class="stats-group-title">이번 달 요약 (날 수)</div>
+        <div class="stats-line" id="coffee-month"></div>
+        <div class="stats-line" id="alcohol-month"></div>
+
+        <div class="stats-group-title">이번 달 술 종류별 합계</div>
+        <div class="stats-line" id="sum-soju"></div>
+        <div class="stats-line" id="sum-beer"></div>
+        <div class="stats-line" id="sum-whisky"></div>
+        <div class="stats-line" id="sum-wine"></div>
+        <div class="stats-line" id="sum-makgeolli"></div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 전체 사용자 순위 -->
+    <div>
+      <div class="rank-card">
+        <div class="rank-title">전체 사용자 순위 (이번 달)</div>
+
+        <div class="stats-group-title">커피 많이 마신 순위</div>
+        <div id="coffee-rank-list"></div>
+
+        <div class="stats-group-title">술 많이 마신 순위</div>
+        <div id="alcohol-rank-list"></div>
+
+        <div class="stats-group-title">소주 순위</div>
+        <div id="soju-rank-list"></div>
+
+        <div class="stats-group-title">맥주 순위</div>
+        <div id="beer-rank-list"></div>
+
+        <div class="stats-group-title">양주 순위</div>
+        <div id="whisky-rank-list"></div>
+
+        <div class="stats-group-title">와인 순위</div>
+        <div id="wine-rank-list"></div>
+
+        <div class="stats-group-title">막걸리 순위</div>
+        <div id="makgeolli-rank-list"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentUser = "default";
+    let currentYear;
+    let currentMonth;
+    let monthData = {};
+    let statsData = {};
+
+    const today = new Date();
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth() + 1;
+
+    const usernameInput = document.getElementById("username-input");
+    const userApplyBtn = document.getElementById("user-apply-btn");
+    const todayBtn = document.getElementById("today-btn");
+    const prevBtn = document.getElementById("prev-month-btn");
+    const nextBtn = document.getElementById("next-month-btn");
+    const monthTitle = document.getElementById("month-title");
+    const calendarGrid = document.getElementById("calendar-grid");
+    const userWarning = document.getElementById("user-warning");
+
+    const coffeeStreakEl = document.getElementById("coffee-streak");
+    const alcoholStreakEl = document.getElementById("alcohol-streak");
+    const coffeeMonthEl = document.getElementById("coffee-month");
+    const alcoholMonthEl = document.getElementById("alcohol-month");
+
+    const sumSojuEl = document.getElementById("sum-soju");
+    const sumBeerEl = document.getElementById("sum-beer");
+    const sumWhiskyEl = document.getElementById("sum-whisky");
+    const sumWineEl = document.getElementById("sum-wine");
+    const sumMakgeolliEl = document.getElementById("sum-makgeolli");
+
+    const coffeeRankList = document.getElementById("coffee-rank-list");
+    const alcoholRankList = document.getElementById("alcohol-rank-list");
+    const sojuRankList = document.getElementById("soju-rank-list");
+    const beerRankList = document.getElementById("beer-rank-list");
+    const whiskyRankList = document.getElementById("whisky-rank-list");
+    const wineRankList = document.getElementById("wine-rank-list");
+    const makgeolliRankList = document.getElementById("makgeolli-rank-list");
+
+    const pad = (n) => (n < 10 ? "0" + n : "" + n);
+    const getDateStr = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
+    const weekdayMon = (jsDay) => (jsDay + 6) % 7;
+
+    function renderRankList(arr, el, unit) {
+      el.innerHTML = "";
+      if (!arr || arr.length === 0) {
+        el.innerHTML = "<div class='rank-item'>데이터 없음</div>";
+        return;
+      }
+      arr.forEach((item, idx) => {
+        const name = item[0];
+        const val = item[1];
+        const div = document.createElement("div");
+        div.className = "rank-item";
+        div.textContent = `${idx + 1}위: ${name} (${val}${unit})`;
+        el.appendChild(div);
+      });
+    }
+
+    async function fetchMonthData() {
+      const url = `/api/month?user=${encodeURIComponent(currentUser)}&year=${currentYear}&month=${currentMonth}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      monthData = data.days || {};
+      statsData = data.stats || {};
+
+      renderCalendar();
+      renderStats();
+      renderRanks();
+      renderUserWarning();
+    }
+
+    function renderUserWarning() {
+      if (!currentUser || currentUser === "default") {
+        userWarning.style.display = "block";
+      } else {
+        userWarning.style.display = "none";
+      }
+    }
+
+    function renderStats() {
+      coffeeStreakEl.textContent = `커피 안 마신 날: ${statsData.coffee_streak ?? 0}일`;
+      alcoholStreakEl.textContent = `술 안 마신 날: ${statsData.alcohol_streak ?? 0}일`;
+      coffeeMonthEl.textContent = `커피 마신 날: ${statsData.coffee_month ?? 0}일`;
+      alcoholMonthEl.textContent = `술 마신 날: ${statsData.alcohol_month ?? 0}일`;
+
+      sumSojuEl.textContent = `소주: ${statsData.soju_total ?? 0}병`;
+      sumBeerEl.textContent = `맥주: ${statsData.beer_total ?? 0}잔`;
+      sumWhiskyEl.textContent = `양주: ${statsData.whisky_total ?? 0}잔`;
+      sumWineEl.textContent = `와인: ${statsData.wine_total ?? 0}잔`;
+      sumMakgeolliEl.textContent = `막걸리: ${statsData.makgeolli_total ?? 0}잔`;
+    }
+
+    function renderRanks() {
+      renderRankList(statsData.coffee_rank, coffeeRankList, "일");
+      renderRankList(statsData.alcohol_rank, alcoholRankList, "일");
+      renderRankList(statsData.soju_rank, sojuRankList, "병");
+      renderRankList(statsData.beer_rank, beerRankList, "잔");
+      renderRankList(statsData.whisky_rank, whiskyRankList, "잔");
+      renderRankList(statsData.wine_rank, wineRankList, "잔");
+      renderRankList(statsData.makgeolli_rank, makgeolliRankList, "잔");
+    }
+
+    function renderCalendar() {
+      monthTitle.textContent = `${currentYear}년 ${currentMonth}월`;
+      calendarGrid.innerHTML = "";
+
+      const firstDate = new Date(currentYear, currentMonth - 1, 1);
+      const lastDate = new Date(currentYear, currentMonth, 0);
+      const daysInMonth = lastDate.getDate();
+      const firstWeekday = weekdayMon(firstDate.getDay());
+
+      for (let i = 0; i < firstWeekday; i++) {
+        calendarGrid.appendChild(document.createElement("div"));
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = getDateStr(currentYear, currentMonth, d);
+        const jsDate = new Date(currentYear, currentMonth - 1, d);
+        const dayData = monthData[dateStr] || {};
+
+        const coffeeOn = dayData.coffee === "마셨다";
+        const alcoholOn = dayData.alcohol === "마셨다";
+
+        const soju = dayData.soju || 0;
+        const beer = dayData.beer || 0;
+        const whisky = dayData.whisky || 0;
+        const wine = dayData.wine || 0;
+        const makgeolli = dayData.makgeolli || 0;
+
+        // 배경 색상: 둘 다 / 술 / 커피 / 아무것도
+        let bg = "#e0f2fe"; // 기본(아무것도 안 마심)
+        if (coffeeOn && alcoholOn) {
+          bg = "#fbbfbb";   // 둘 다 마신 날
+        } else if (alcoholOn) {
+          bg = "#fca5a5";   // 술만 마신 날
+        } else if (coffeeOn) {
+          bg = "#fdba74";   // 커피만 마신 날
+        }
+
+        const outer = document.createElement("div");
+        outer.className = "day-cell-outer";
+
+        const inner = document.createElement("div");
+        inner.className = "day-cell-inner";
+        inner.style.backgroundColor = bg;
+
+        if (
+          jsDate.getFullYear() === today.getFullYear() &&
+          jsDate.getMonth() === today.getMonth() &&
+          jsDate.getDate() === today.getDate()
+        ) {
+          inner.classList.add("today");
+        }
+
+        const dayNumber = document.createElement("div");
+        dayNumber.className = "day-number";
+        dayNumber.textContent = String(d);
+
+        const toggles = document.createElement("div");
+        toggles.className = "toggles-container";
+
+        // 커피 토글
+        const coffeeLine = document.createElement("div");
+        coffeeLine.className = "toggle-line";
+        coffeeLine.innerHTML = `<span style="color:${coffeeOn ? "#f97316" : "#9ca3af"}">${coffeeOn ? "●" : "○"}</span> 커피`;
+        coffeeLine.onclick = () => {
+          updateDay(dateStr, { coffee: !coffeeOn });
+        };
+
+        // 술 토글 + 양 입력
+        const alcoholLine = document.createElement("div");
+        alcoholLine.className = "toggle-line";
+        alcoholLine.innerHTML = `<span style="color:${alcoholOn ? "#dc2626" : "#9ca3af"}">${alcoholOn ? "●" : "○"}</span> 술`;
+        alcoholLine.onclick = () => {
+          const prev = `${soju},${beer},${whisky},${wine},${makgeolli}`;
+          const msg =
+            "소주(병), 맥주(잔), 양주(잔), 와인(잔), 막걸리(잔) 순서로 쉼표로 입력해주세요.\n예: 1,2,0,0,1";
+          const input = window.prompt(msg, prev);
+          if (input === null) return;
+
+          const parts = input.split(",").map((x) => x.trim());
+          while (parts.length < 5) parts.push("0");
+
+          const s = parseInt(parts[0] || "0", 10) || 0;
+          const b = parseInt(parts[1] || "0", 10) || 0;
+          const w = parseInt(parts[2] || "0", 10) || 0;
+          const wi = parseInt(parts[3] || "0", 10) || 0;
+          const m = parseInt(parts[4] || "0", 10) || 0;
+
+          const safe = (x) => (Number.isFinite(x) && x > 0 ? x : 0);
+
+          const s2 = safe(s);
+          const b2 = safe(b);
+          const w2 = safe(w);
+          const wi2 = safe(wi);
+          const m2 = safe(m);
+
+          const total = s2 + b2 + w2 + wi2 + m2;
+          const hasDrink = total > 0;
+
+          updateDay(dateStr, {
+            alcohol: hasDrink,
+            soju: s2,
+            beer: b2,
+            whisky: w2,
+            wine: wi2,
+            makgeolli: m2,
+          });
+        };
+
+        toggles.appendChild(coffeeLine);
+        toggles.appendChild(alcoholLine);
+
+        // 요약 텍스트: 소1 맥2 양1 와1 막1
+        const parts = [];
+        if (soju > 0) parts.push(`소${soju}`);
+        if (beer > 0) parts.push(`맥${beer}`);
+        if (whisky > 0) parts.push(`양${whisky}`);
+        if (wine > 0) parts.push(`와${wine}`);
+        if (makgeolli > 0) parts.push(`막${makgeolli}`);
+        if (parts.length > 0) {
+          const summary = document.createElement("div");
+          summary.className = "drink-summary";
+          summary.textContent = parts.join(" ");
+          toggles.appendChild(summary);
+        }
+
+        inner.appendChild(dayNumber);
+        inner.appendChild(toggles);
+        outer.appendChild(inner);
+        calendarGrid.appendChild(outer);
+      }
+    }
+
+    async function updateDay(dateStr, bodyExtra) {
+      await fetch("/api/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.assign({ user: currentUser, date: dateStr }, bodyExtra)),
+      });
+      fetchMonthData();
+    }
+
+    userApplyBtn.onclick = () => {
+      const name = usernameInput.value.trim();
+      currentUser = name || "default";
+      localStorage.setItem("sul_user", currentUser);
+      fetchMonthData();
+    };
+
+    todayBtn.onclick = () => {
+      const now = new Date();
+      currentYear = now.getFullYear();
+      currentMonth = now.getMonth() + 1;
+      fetchMonthData();
+    };
+
+    prevBtn.onclick = () => {
+      currentMonth--;
+      if (currentMonth === 0) {
+        currentMonth = 12;
+        currentYear--;
+      }
+      fetchMonthData();
+    };
+
+    nextBtn.onclick = () => {
+      currentMonth++;
+      if (currentMonth === 13) {
+        currentMonth = 1;
+        currentYear++;
+      }
+      fetchMonthData();
+    };
+
+    // 저장된 사용자 불러오기
+    const savedUser = localStorage.getItem("sul_user");
+    if (savedUser) {
+      currentUser = savedUser;
+      usernameInput.value = savedUser === "default" ? "" : savedUser;
+    }
+
+    fetchMonthData();
+  </script>
+
+</div>
 </body>
 </html>
