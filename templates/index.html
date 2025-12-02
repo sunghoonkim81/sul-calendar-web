@@ -216,6 +216,7 @@
       <div class="stats-line" id="sum-beer">맥주: -잔</div>
       <div class="stats-line" id="sum-whisky">양주: -잔</div>
       <div class="stats-line" id="sum-wine">와인: -잔</div>
+      <div class="stats-line" id="sum-makgeolli">막걸리: -잔</div>
     </div>
 
     <!-- 순위 -->
@@ -259,6 +260,7 @@
       const sumBeerEl = document.getElementById("sum-beer");
       const sumWhiskyEl = document.getElementById("sum-whisky");
       const sumWineEl = document.getElementById("sum-wine");
+      const sumMakgeolliEl = document.getElementById("sum-makgeolli");
 
       const coffeeRankList = document.getElementById("coffee-rank-list");
       const alcoholRankList = document.getElementById("alcohol-rank-list");
@@ -323,6 +325,8 @@
           `양주: ${statsData.whisky_total ?? 0}잔`;
         sumWineEl.textContent =
           `와인: ${statsData.wine_total ?? 0}잔`;
+        sumMakgeolliEl.textContent =
+          `막걸리: ${statsData.makgeolli_total ?? 0}잔`;
       }
 
       // ---- 렌더: 순위 ----
@@ -384,6 +388,7 @@
           const beer = dayData.beer ?? 0;
           const whisky = dayData.whisky ?? 0;
           const wine = dayData.wine ?? 0;
+          const makgeolli = dayData.makgeolli ?? 0;
 
           let bg = "#e0f2fe";        // 둘 다 안 마심
           if (alcoholOn) bg = "#fecaca";      // 술
@@ -438,9 +443,9 @@
           alcoholLine.appendChild(alcoholText);
 
           alcoholLine.onclick = () => {
-            const prev = `${soju},${beer},${whisky},${wine}`;
+            const prev = `${soju},${beer},${whisky},${wine},${makgeolli}`;
             const msg =
-              "소주(병), 맥주(잔), 양주(잔), 와인(잔) 순서로 쉼표로 입력해주세요.\n예: 1,2,0,0";
+              "소주(병), 맥주(잔), 양주(잔), 와인(잔), 막걸리(잔) 순서로 쉼표로 입력해주세요.\n예: 1,2,0,0,1";
             const input = window.prompt(msg, prev);
 
             if (input === null) {
@@ -449,13 +454,14 @@
             }
 
             const parts = input.split(",").map((x) => x.trim());
-            while (parts.length < 4) parts.push("0");
+            while (parts.length < 5) parts.push("0");
             const s = parseInt(parts[0] || "0", 10) || 0;
             const b = parseInt(parts[1] || "0", 10) || 0;
             const w = parseInt(parts[2] || "0", 10) || 0;
             const wi = parseInt(parts[3] || "0", 10) || 0;
+            const m = parseInt(parts[4] || "0", 10) || 0;
 
-            const total = s + b + w + wi;
+            const total = s + b + w + wi + m;
             const hasDrink = total > 0;
 
             updateDay(dateStr, {
@@ -464,6 +470,7 @@
               beer: b,
               whisky: w,
               wine: wi,
+              makgeolli: m,
             });
           };
 

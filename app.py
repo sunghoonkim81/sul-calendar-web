@@ -4,7 +4,7 @@ import os
 
 from sqlalchemy import (
     create_engine, Column, Integer, String, Boolean, Date,
-    ForeignKey, func
+    ForeignKey, func, inspect, text
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 # ---------------- DB 설정 ---------------- #
 
-# PythonAnywhere에서는 별도 DATABASE_URL이 없으니 sqlite 사용
+# PythonAnywhere에서는 DATABASE_URL 없으면 sqlite 사용
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     DATABASE_URL = "sqlite:///sul_calendar.db"
@@ -49,7 +49,7 @@ class Entry(Base):
 
 class DrinkAmount(Base):
     """
-    술 종류별 양 (소주/맥주/양주/와인)
+    술 종류별 양 (소주/맥주/양주/와인/막걸리)
     """
     __tablename__ = "drink_amounts"
 
@@ -57,16 +57,40 @@ class DrinkAmount(Base):
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     date = Column(Date, index=True)
 
-    soju_bottle = Column(Integer, default=0)   # 병
-    beer_glass = Column(Integer, default=0)    # 잔
-    whisky_glass = Column(Integer, default=0)  # 잔
-    wine_glass = Column(Integer, default=0)    # 잔
+    soju_bottle = Column(Integer, default=0)    # 병
+    beer_glass = Column(Integer, default=0)     # 잔
+    whisky_glass = Column(Integer, default=0)   # 잔
+    wine_glass = Column(Integer, default=0)     # 잔
+    makgeolli_glass = Column(Integer, default=0)  # 잔
 
     user = relationship("User", back_populates="drink_amounts")
 
 
-# 테이블 생성 (기존 테이블은 유지, 새로운 테이블만 추가됨)
+# 테이블 생성 (처음 만들 때)
 Base.metadata.create_all(bind=engine)
+
+
+# 간단 마이그레이션: 기존 DB에 막걸리 컬럼 없으면 추가
+def run_migrations():
+    try:
+        with engine.connect() as conn:
+            insp = inspect(conn)
+            if "drink_amounts" in insp.get_table_names():
+                cols = [c["name"] for c in insp.get_columns("drink_amounts")]
+                if "makgeolli_glass" not in cols:
+                    conn.execute(
+                        text(
+                            "ALTER TABLE drink_amounts "
+                            "ADD COLUMN makgeolli_glass INTEGER DEFAULT 0"
+                        )
+                    )
+                    conn.commit()
+    except Exception:
+        # 에러 나도 앱 동작에는 지장 없게 무시
+        pass
+
+
+run_migrations()
 
 
 def get_session():
@@ -226,6 +250,8 @@ def api_month():
                     day_data["whisky"] = drink.whisky_glass
                 if drink.wine_glass:
                     day_data["wine"] = drink.wine_glass
+                if getattr(drink, "makgeolli_glass", 0):
+                    day_data["makgeolli"] = drink.makgeolli_glass
 
             if day_data:
                 days_dict[ds] = day_data
@@ -246,6 +272,7 @@ def api_month():
         beer_total = sum(e.beer_glass or 0 for e in drink_entries)
         whisky_total = sum(e.whisky_glass or 0 for e in drink_entries)
         wine_total = sum(e.wine_glass or 0 for e in drink_entries)
+        makgeolli_total = sum(getattr(e, "makgeolli_glass", 0) or 0 for e in drink_entries)
 
         stats = {
             "coffee_streak": coffee_streak,
@@ -258,6 +285,7 @@ def api_month():
             "beer_total": beer_total,
             "whisky_total": whisky_total,
             "wine_total": wine_total,
+            "makgeolli_total": makgeolli_total,
         }
 
         return jsonify({"days": days_dict, "stats": stats})
@@ -276,7 +304,8 @@ def api_update():
       "soju": 1,
       "beer": 2,
       "whisky": 0,
-      "wine": 0
+      "wine": 0,
+      "makgeolli": 0
     }
     """
     body = request.get_json() or {}
@@ -297,6 +326,7 @@ def api_update():
     beer = body.get("beer")
     whisky = body.get("whisky")
     wine = body.get("wine")
+    makgeolli = body.get("makgeolli")
 
     session = get_session()
     try:
@@ -319,10 +349,9 @@ def api_update():
 
         # 술 여부는 두 가지 경로 중 하나로 정해짐:
         # 1) alcohol 필드가 직접 전달된 경우
-        # 2) 술 양(soju/beer/whisky/wine) 합계로 자동 판단
-        amounts_given = any(v is not None for v in [soju, beer, whisky, wine])
+        # 2) 술 양(soju/beer/whisky/wine/makgeolli) 합계로 자동 판단
+        amounts_given = any(v is not None for v in [soju, beer, whisky, wine, makgeolli])
 
-        # 먼저 양을 숫자로 정리
         def _to_int(x):
             try:
                 return int(x)
@@ -333,6 +362,7 @@ def api_update():
         beer_i = _to_int(beer) if beer is not None else None
         whisky_i = _to_int(whisky) if whisky is not None else None
         wine_i = _to_int(wine) if wine is not None else None
+        makgeolli_i = _to_int(makgeolli) if makgeolli is not None else None
 
         # ----- DrinkAmount 처리 -----
         drink = (
@@ -350,6 +380,7 @@ def api_update():
                     beer_glass=0,
                     whisky_glass=0,
                     wine_glass=0,
+                    makgeolli_glass=0,
                 )
                 session.add(drink)
 
@@ -361,12 +392,15 @@ def api_update():
                 drink.whisky_glass = max(0, whisky_i)
             if wine_i is not None:
                 drink.wine_glass = max(0, wine_i)
+            if makgeolli_i is not None:
+                drink.makgeolli_glass = max(0, makgeolli_i)
 
             total_amount = (
                 (drink.soju_bottle or 0)
                 + (drink.beer_glass or 0)
                 + (drink.whisky_glass or 0)
                 + (drink.wine_glass or 0)
+                + (getattr(drink, "makgeolli_glass", 0) or 0)
             )
 
             # 양 합계가 0이면 DrinkAmount 삭제
@@ -387,8 +421,13 @@ def api_update():
         # 커피/술 둘 다 False이고 술 양도 없으면 Entry 삭제
         has_drink = False
         if drink:
-            if (drink.soju_bottle or 0) or (drink.beer_glass or 0) \
-               or (drink.whisky_glass or 0) or (drink.wine_glass or 0):
+            if (
+                (drink.soju_bottle or 0)
+                or (drink.beer_glass or 0)
+                or (drink.whisky_glass or 0)
+                or (drink.wine_glass or 0)
+                or (getattr(drink, "makgeolli_glass", 0) or 0)
+            ):
                 has_drink = True
 
         if not entry.coffee and not entry.alcohol and not has_drink:
